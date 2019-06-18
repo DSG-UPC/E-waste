@@ -13,7 +13,7 @@
     "web3": "^0.20"
   },
   "scripts": {
-    "postinstall": "sh postinstall.sh",
+    "post": "sh postinstall.sh",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

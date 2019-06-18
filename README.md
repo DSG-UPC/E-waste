@@ -4,7 +4,7 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 * Run `npm install`
 * In a new terminal start ganache with the command `node_modules/.bin/ganache-cli` 
-* Run `npm postinstall`
+* Run `npm post`
 * Continue using the following available scripts
 
 ## Available Scripts
