@@ -2,7 +2,9 @@ import Web3 from 'web3';
 import contract from 'truffle-contract';
 
 
-const provider = new Web3.providers.HttpProvider('http://localhost:7545');
+// Web3.providers.WebsocketProvider.prototype.sendAsync = Web3.providers.WebsocketProvider.prototype.send
+
+const provider = new Web3.providers.HttpProvider('http://localhost:8545');
 
 const web3 = new Web3(provider);
 web3.eth.defaultAccount = web3.eth.accounts[0];
@@ -19,5 +21,5 @@ export const selectContractInstance = (contractBuild) => {
         myContract
             .deployed()
             .then(instance => res(instance));
-    })
+    });
 };

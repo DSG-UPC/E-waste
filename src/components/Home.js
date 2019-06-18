@@ -32,7 +32,7 @@ class Home extends Component {
                     this.setState({registered: false});
                 }else{
                     this.setState({registered: true});
-                    this.setState({username : info[0]})
+                    this.setState({username : info[0]});
                 }
             });
     }
@@ -44,7 +44,7 @@ class Home extends Component {
                 state: {
                     account: this.state.account
                 }
-            })
+            });
         }else{
             this.props.history.push({
                 pathname: "/championship",
@@ -52,7 +52,7 @@ class Home extends Component {
                     account: this.state.account,
                     username: this.state.username
                 }
-            })
+            });
         }
     }
 
