@@ -1,5 +1,12 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Starting point
+
+* Run `npm install`
+* In a new terminal start ganache with the command `node_modules/.bin/ganache-cli` 
+* Run `npm postinstall`
+* Continue using the following available scripts
+
 ## Available Scripts
 
 In the project directory, you can run:
