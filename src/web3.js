@@ -5,6 +5,7 @@ import contract from 'truffle-contract';
 // Web3.providers.WebsocketProvider.prototype.sendAsync = Web3.providers.WebsocketProvider.prototype.send
 
 const provider = new Web3.providers.HttpProvider('http://localhost:8545');
+Web3.providers.HttpProvider.prototype.sendAsync = Web3.providers.HttpProvider.prototype.send;
 
 const web3 = new Web3(provider);
 web3.eth.defaultAccount = web3.eth.accounts[0];
@@ -12,8 +13,8 @@ web3.eth.defaultAccount = web3.eth.accounts[0];
 export default web3;
 
 export const selectContractInstance = (contractBuild) => {
-    return new Promise(res => {
-        const myContract = contract(contractBuild);
+    return new Promise(async res => {
+        let myContract = await contract(contractBuild);
         myContract.setProvider(provider);
         myContract.defaults({
             gasLimit: "3000000"
