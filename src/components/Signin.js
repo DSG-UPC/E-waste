@@ -39,7 +39,8 @@ class Sign extends Component {
     }
 
     async insertUser(){
-        await this.traceability.insertNewUser(this.state.account, this.state.value, this.state.isRecycling, {from: web3.eth.accounts[0]} )
+        let accounts = await web3.eth.getAccounts()
+        await this.traceability.insertNewUser(this.state.account, this.state.value, this.state.isRecycling, {from: accounts[0], gas:550000} )
             .then(() =>{
                 this.setState({loading: false});
             });
@@ -52,14 +53,15 @@ class Sign extends Component {
         this.insertUser()
             .then(ret =>{
                 this.setState({loading:ret})
+                this.props.history.push({
+                    pathname: "/championship",
+                    state: {
+                        account: this.state.account,
+                        username: this.state.value
+                    }
+                })
             });
-        this.props.history.push({
-            pathname: "/championship",
-            state: {
-                account: this.state.account,
-                username: this.state.value
-            }
-        })
+        
     }
 
     render() {

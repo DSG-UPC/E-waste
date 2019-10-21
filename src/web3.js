@@ -17,7 +17,7 @@ export const selectContractInstance = (contractBuild) => {
         let myContract = await contract(contractBuild);
         myContract.setProvider(provider);
         myContract.defaults({
-            gasLimit: "3000000"
+            gasLimit: "5000000"
         });
         myContract
             .deployed()
