@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {withRouter} from 'react-router-dom';
 import {selectContractInstance} from '../web3';
-import Traceability from "../truffle/build/contracts/Traceability.json";
+import DepositDevice from "../truffle/build/contracts/DepositDevice.json";
 
 class Championship extends Component{
 
@@ -18,7 +18,7 @@ class Championship extends Component{
     }
 
     async componentDidMount() {
-        this.user = await selectContractInstance(Traceability);
+        this.user = await selectContractInstance(DepositDevice);
         this.setState({account : this.props.location.state.account});
         this.setState({username : this.props.location.state.username});
         let n = await this.user.noMembers();

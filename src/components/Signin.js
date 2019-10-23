@@ -1,7 +1,7 @@
 import React, {Component} from 'react';
 import {withRouter} from 'react-router-dom';
 import web3 ,{selectContractInstance} from "../web3";
-import Traceability from "../truffle/build/contracts/Traceability";
+import DepositDevice from "../truffle/build/contracts/DepositDevice.json";
 
 class Sign extends Component {
     constructor(props){
@@ -20,7 +20,7 @@ class Sign extends Component {
     }
 
     async componentDidMount() {
-        this.traceability = await selectContractInstance(Traceability);
+        this.traceability = await selectContractInstance(DepositDevice);
     }
 
     componentWillMount() {
