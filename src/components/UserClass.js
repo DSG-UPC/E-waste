@@ -18,6 +18,8 @@ class UserClass extends Component{
             serial: '',
             model: '',
             deviceUri: '',
+            deviceAddress: '0x0',
+            deviceOwner: '0x0',
             buyer: '0x0'
         };
 
@@ -58,22 +60,25 @@ class UserClass extends Component{
             const task = await this.traceability.devices(i);
             let id = task[3];
             const owner = await this.traceability.deviceToOwner(id);
+            console.log(owner);
             if(first === 0){
                 if(owner === this.state.account) {
+                    task.push(owner);
                     this.setState({
                         dev: [...this.state.dev, task]
                     });
                     this.setState(prevState => {
                         return {noDev: prevState.noDev + 1}
-                    })
+                    });
                 }
             }else{
                 if(owner === this.state.account && i > this.state.noDev) {
+                    task.push(owner);
                     this.setState({
                         dev: [...this.state.dev, task]
                     });
                     this.setState(prevState => {
-                        return {noDev: prevState.noDev + 1}
+                        return {noDev: prevState.noDev + 1};
                     });
                 }
             }
@@ -212,10 +217,16 @@ class UserClass extends Component{
                                 {
                                     this.state.dev.map((dev) => {
                                         return(
-                                            <div key={String(dev[3])}  className="list-element">
+                                            <div key={String(dev[2])}  className="list-element">
                                                 <label> Device type: {dev[0]} </label>
                                                 <br/>
                                                 <label> Device Uri: {dev[2]} </label>
+                                                <br/>
+                                                <label> Device Address: {dev[0]} </label>
+                                                <br/>
+                                                <label> Device Owner: {dev[4]} </label>
+                                                <br/>
+                                                <label> Device Role: {dev[2]} </label>
                                             </div>
                                         );
                                     })}
