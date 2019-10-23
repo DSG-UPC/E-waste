@@ -1,36 +1,30 @@
-import React, {Component} from 'react';
-import {withRouter} from 'react-router-dom';
-import {selectContractInstance } from '../web3';
-import Traceability from "../truffle/build/contracts/Traceability";
+import React, { Component } from 'react';
+import { withRouter } from 'react-router-dom';
+import { selectContractInstance } from '../web3';
+import DeviceFactory from "../truffle/build/contracts/DeviceFactory";
+import DepositDevice from "../truffle/build/contracts/DepositDevice";
 
-class UserClass extends Component{
+// import { declareVariable } from '@babel/types';
+
+class UserClass extends Component {
 
     constructor(props) {
         super(props);
         this.state = {
-            account: '0x0',
-            username: '',
-            recycle: false,
+            account: props.location.state.account,
+            accounts: props.location.state.accounts,
             dev: [],
-            noDev: 0,
-            deviceType: '',
-            manufacturer: '',
-            serial: '',
-            model: '',
-            deviceUri: '',
-            deviceAddress: '0x0',
-            deviceOwner: '0x0',
-            buyer: '0x0'
+            deviceName: '',
+            initialPrice: 0,
+            destination: '0x0'
         };
 
         this.insertDevice = this.insertDevice.bind(this);
         this.checkDevices = this.checkDevices.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
-        this.handleType = this.handleType.bind(this);
-        this.handleMananufacturer = this.handleMananufacturer.bind(this);
-        this.handleSerial = this.handleSerial.bind(this);
-        this.handleModel = this.handleModel.bind(this);
-        this.checkRecycled = this.checkRecycled.bind(this);
+        this.handleName = this.handleName.bind(this);
+        this.handlePrice = this.handlePrice.bind(this);
+        this.handleDestination = this.handleDestination.bind(this);
         this.handleTransfer = this.handleTransfer.bind(this);
         this.transfer = this.transfer.bind(this);
         this.handleBuyer = this.handleBuyer.bind(this);
@@ -38,114 +32,88 @@ class UserClass extends Component{
     }
 
     async componentDidMount() {
-        this.traceability = await selectContractInstance(Traceability);
-        this.setState({account : this.props.location.state.account});
-        this.setState({username : this.props.location.state.username});
-        await this.checkDevices(0);
-        await this.checkRecycled();
+        this.factory = await selectContractInstance(DeviceFactory);
+        this.setState({ account: this.props.location.state.account });
+        await this.checkDevices();
     }
 
-    async checkRecycled(){
-        const users = await this.traceability.addressToUsers(this.state.account);
-        if(users[2] === true) {
+    async checkDevices() {
+        var devices = await this.factory.getDeployedDevices({ from: this.state.account });
+        let n = devices.length;
+        if (this.state.dev.length !== n) {
+            devices = [];
+            for (let i = 0; i < n; i++) {
+                let d = await DepositDevice(devices[i]);
+                var task = {
+                    'name': d[i].name,
+                    'owner': d[i].owner,
+                    'address': d[i].address,
+                    'value': d[i].value,
+                    'role': ''
+                };
+                devices.push(task);
+            }
             this.setState({
-                recycle: true
+                dev: [devices]
             });
         }
     }
 
-    async checkDevices(first){
-        let n = await this.traceability.noDevices();
-        for (let i = 0; i < n; i++) {
-            const task = await this.traceability.devices(i);
-            let id = task[3];
-            const owner = await this.traceability.deviceToOwner(id);
-            console.log(owner);
-            if(first === 0){
-                if(owner === this.state.account) {
-                    task.push(owner);
-                    this.setState({
-                        dev: [...this.state.dev, task]
-                    });
-                    this.setState(prevState => {
-                        return {noDev: prevState.noDev + 1}
-                    });
-                }
-            }else{
-                if(owner === this.state.account && i > this.state.noDev) {
-                    task.push(owner);
-                    this.setState({
-                        dev: [...this.state.dev, task]
-                    });
-                    this.setState(prevState => {
-                        return {noDev: prevState.noDev + 1};
-                    });
-                }
-            }
-        }
-    }
-
-    async insertDevice(){
+    async insertDevice() {
         try {
-            await this.traceability.insertNewDevice(
-                String(this.state.deviceType),
-                String(this.state.manufacturer),
-                String(this.state.serial),
-                String(this.state.model),
-                {from: this.state.account}
-                )
-                .then(function(err, ret) {
-                    console.log("ret " +ret);
+            await this.factory.createDevice(
+                this.state.deviceName,
+                this.state.initialPrice,
+                this.state.deviceDestination
+            )
+                .then(function (err, ret) {
+                    console.log("ret " + ret);
                     console.log("err " + err);
-                })
-        }catch(e){
+                });
+        } catch (e) {
             console.log(e);
         }
         await this.checkDevices(1);
     }
 
-    async transfer( _tokenID, _to){
-        await this.traceability.transferFrom(this.state.account, _to, _tokenID, {from : this.state.account})
-            .then(function(err,ret){
-                console.log("ret " +ret);
+    async transfer(_tokenID, _to) {
+        await this.traceability.transferFrom(this.state.account, _to, _tokenID, { from: this.state.account })
+            .then(function (err, ret) {
+                console.log("ret " + ret);
                 console.log("err " + err);
             });
     }
 
-    handleType(event) {
-        this.setState({deviceType: event.target.value});
+    handleName(event) {
+        this.setState({ deviceName: event.target.value });
     }
 
-    handleMananufacturer(event) {
-        this.setState({manufacturer: event.target.value});
+    handlePrice(event) {
+        this.setState({ initialPrice: event.target.value });
     }
 
-    handleSerial(event) {
-        this.setState({serial: event.target.value});
+    handleDestination(event) {
+        this.setState({ destination: event.target.value });
     }
 
-    handleModel(event) {
-        this.setState({model: event.target.value});
+    handleBuyer(event) {
+        this.setState({ buyer: event.target.value });
     }
 
-    handleBuyer(event){
-        this.setState({buyer: event.target.value});
-    }
-
-    handleUri(event){
-        this.setState({deviceUri: event.target.value});
+    handleUri(event) {
+        this.setState({ deviceUri: event.target.value });
     }
 
     handleTransfer(event) {
         alert('A device is going to be transferred ');
         event.preventDefault();
-        if(this.state.deviceUri === '' || this.state.buyer === '0x0'){
+        if (this.state.deviceUri === '' || this.state.buyer === '0x0') {
             alert('Device Uri and To must be not empty');
             return null;
-        }else {
-            for(let i=0; i < this.state.noDev ; i++){
-                if(this.state.dev[i][2] === this.state.deviceUri){
-                    this.transfer(this.state.dev[i][3], this.state.buyer).then(res =>{
+        } else {
+            for (let i = 0; i < this.state.noDev; i++) {
+                if (this.state.dev[i][2] === this.state.deviceUri) {
+                    this.transfer(this.state.dev[i][3], this.state.buyer).then(res => {
                         console.log(res);
                     });
                 }
@@ -154,11 +122,11 @@ class UserClass extends Component{
     }
 
 
-    handleSubmit(event){
+    handleSubmit(event) {
         alert('A  new device was submitted: ');
         event.preventDefault();
         this.insertDevice()
-            .then(ret =>{
+            .then(ret => {
                 console.log(ret);
             });
     }
@@ -168,23 +136,17 @@ class UserClass extends Component{
             <div className="User_class">
                 <header>
                     <button onClick={() => this.props.history.push({
-                        pathname: "/championship",
+                        pathname: "/",
                         state: {
-                            account: this.state.account,
-                            username: this.state.username
+                            account: this.state.account
                         }
                     })}>
-                         Home
+                        Home
                     </button>
-                    <h1> {this.state.username} </h1>
-                    <img
-                        src={require('../user-silhouette.png')}
-                        alt=' '
-                    />
                 </header>
-                <br/>
+                <br />
                 <div className="device-list">
-                    {   (this.state.noDev!== 0)?
+                    {(this.state.dev.length !== 0) ?
                         <div >
                             <div className="transfer">
                                 <form >
@@ -197,7 +159,7 @@ class UserClass extends Component{
                                             onChange={this.handleUri}
                                         />
                                     </label>
-                                    <br/>
+                                    <br />
                                     <label>
                                         To:
                                         <input
@@ -207,7 +169,7 @@ class UserClass extends Component{
                                             onChange={this.handleBuyer}
                                         />
                                     </label>
-                                    <br/>
+                                    <br />
                                     <button
                                         onClick={this.handleTransfer}
                                     >Transfer</button>
@@ -216,79 +178,66 @@ class UserClass extends Component{
                             <ul>
                                 {
                                     this.state.dev.map((dev) => {
-                                        return(
-                                            <div key={String(dev[2])}  className="list-element">
-                                                <label> Device type: {dev[0]} </label>
-                                                <br/>
-                                                <label> Device Uri: {dev[2]} </label>
-                                                <br/>
-                                                <label> Device Address: {dev[0]} </label>
-                                                <br/>
+                                        return (
+                                            <div key={String(dev[2])} className="list-element">
+                                                <label> Device name: {dev.name} </label>
+                                                <br />
+                                                <label> Device initial value: {dev.value} </label>
+                                                <br />
+                                                <label> Device Address: {dev.address} </label>
+                                                <br />
                                                 <label> Device Owner: {dev[4]} </label>
-                                                <br/>
+                                                <br />
                                                 <label> Device Role: {dev[2]} </label>
                                             </div>
                                         );
                                     })}
                             </ul>
-                        </div>:
+                        </div> :
                         <label>You don't have any device registered yet </label>
                     }
                 </div>
-                {(this.state.recycle === true) ?
-                    <div> </div> :
+                <div> </div> :
                     <div className="device-form">
-                        <form>
-                            <label>
-                                Device type:
-                                <br/>
-                                <input
-                                    name="deviceType"
-                                    type="text"
-                                    value={this.state.deviceType}
-                                    onChange={this.handleType}
-                                />
-                            </label>
-                            <br/>
-                            <label>
-                                Manufacturer:
-                                <br/>
-                                <input
-                                    name="manufacturer"
-                                    type="text"
-                                    value={this.state.manufacturer}
-                                    onChange={this.handleMananufacturer}
-                                />
-                            </label>
-                            <br/>
-                            <label>
-                                Serial Number:
-                                <br/>
-                                <input
-                                    name="name"
-                                    type="text"
-                                    value={this.state.serial}
-                                    onChange={this.handleSerial}
-                                />
-                            </label>
-                            <br/>
-                            <label>
-                                Model:
-                                <br/>
-                                <input
-                                    name="model"
-                                    type="text"
-                                    value={this.state.model}
-                                    onChange={this.handleModel}
-                                />
-                            </label>
-                            <br/>
-                            <button onClick={this.handleSubmit}>
-                                Insert device
+                    <form>
+                        <label>
+                            Device name:
+                                <br />
+                            <input
+                                name="deviceName"
+                                type="text"
+                                value={this.state.deviceName}
+                                onChange={this.handleName}
+                            />
+                        </label>
+                        <br />
+                        <label>
+                            Initial price:
+                                <br />
+                            <input
+                                name="price"
+                                type="number"
+                                value={this.state.initialPrice}
+                                onChange={this.handlePrice}
+                            />
+                        </label>
+                        <br />
+                        <label>
+                            Destination address:
+                                <br />
+                            <input
+                                name="destination"
+                                type="text"
+                                value={this.state.destination}
+                                onChange={this.handleDestination}
+                            />
+                        </label>
+                        <br />
+                        <button onClick={this.handleSubmit}>
+                            Insert device
                             </button>
-                        </form>
-                    </div>
-                }
+                    </form>
+                </div>
             </div>
         );
     }

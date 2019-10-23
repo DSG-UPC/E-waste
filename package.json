@@ -4,11 +4,13 @@
   "private": true,
   "dependencies": {
     "ganache-cli": "^6.4.4",
+    "openzeppelin-solidity": "2.0.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "react-scripts": "3.0.0",
     "semantic-ui-react": "^0.87.1",
-    "truffle": "^4.1.15",
+    "solc": "^0.4.25",
+    "truffle": "^5.0.4",
     "truffle-contract": "^3.0.4",
     "web3": "^1.0.0-beta.33"
   },

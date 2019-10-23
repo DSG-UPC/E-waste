@@ -1,7 +1,8 @@
-import React, {Component} from 'react';
-import {withRouter} from 'react-router-dom';
-import web3, {selectContractInstance} from "../web3";
-import Traceability from "../truffle/build/contracts/Traceability";
+import React, { Component } from 'react';
+import { withRouter } from 'react-router-dom';
+import RoleManager from "../truffle/build/contracts/RoleManager";
+import { accounts } from '../web3';
+import { selectContractInstance } from '../web3';
 
 class Home extends Component {
 
@@ -9,56 +10,54 @@ class Home extends Component {
         super(props);
         this.state = {
             account: '0x0',
-            username: '',
             loading: true,
-            userAddress : '0x0',
-            registered : false
+            userAddress: '0x0'
         };
-        this.checkAccount = this.checkAccount.bind(this);
         this.redirectTo = this.redirectTo.bind(this);
     }
 
     async componentWillMount() {
-        this.traceability = await selectContractInstance(Traceability);
-        this.setState({loading : false});
-        this.setState({account: window.ethereum.selectedAddress});
-        await this.checkAccount();
+        this.setState({ loading: false });
+        this.setState({ account: window.ethereum.selectedAddress });
     }
 
-    async checkAccount(){
-        await this.traceability.getUserInfo(this.state.account, {from: web3.eth.accounts[0]} )
-            .then(info =>{
-                if(info[0] === ''){
-                    this.setState({registered: false});
-                }else{
-                    this.setState({registered: true});
-                    this.setState({username : info[0]});
-                }
-            });
+    async createRoles(accs, manager) {
+        var owner = accs.owner;
+        await manager.addConsumer(accs.consumer, { from: owner });
+        await manager.addProducer(accs.producer, { from: owner });
+        await manager.addProcessor(accs.processor, { from: owner });
+        await manager.addRepairer(accs.repairer, { from: owner });
+        await manager.addItad(accs.itad, { from: owner });
+        await manager.addNotary(accs.notary, { from: owner });
     }
 
-    redirectTo(){
-        if(this.state.registered === false) {
-            this.props.history.push({
-                pathname: "/sign",
-                state: {
-                    account: this.state.account
-                }
-            });
-        }else{
-            this.props.history.push({
-                pathname: "/championship",
-                state: {
-                    account: this.state.account,
-                    username: this.state.username
-                }
-            });
-        }
+    async redirectTo() {
+        let accs = await accounts.then(i => {
+            return {
+                'owner': i[0],
+                'consumer': i[1],
+                'producer': i[2],
+                'processor': i[3],
+                'repairer': i[4],
+                'itad': i[5],
+                'notary': i[6],
+            };
+        });
+        var manager = await selectContractInstance(RoleManager);
+        this.createRoles(accs, manager);
+        this.props.history.push({
+            pathname: "/userPage",
+            state: {
+                account: this.state.account,
+                accounts: accs
+            }
+        });
+        // }
     }
 
     render() {
-        if(this.state.loading === true){
-            return(
+        if (this.state.loading === true) {
+            return (
                 <div id="load">
                     <img
                         src={require('../load.gif')}
@@ -68,7 +67,7 @@ class Home extends Component {
                 </div>
             );
         }
-        return(
+        return (
             <div id="home">
                 <p>
                     We love our planet and we want to do whatever it is possible to save it.

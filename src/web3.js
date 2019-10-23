@@ -12,12 +12,16 @@ web3.eth.defaultAccount = web3.eth.accounts[0];
 
 export default web3;
 
+export const accounts = web3.eth.getAccounts().then(a => {
+    return a;
+});
+
 export const selectContractInstance = (contractBuild) => {
     return new Promise(async res => {
         let myContract = await contract(contractBuild);
         myContract.setProvider(provider);
         myContract.defaults({
-            gasLimit: "5000000"
+            gasLimit: "6721975"
         });
         myContract
             .deployed()
