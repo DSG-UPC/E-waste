@@ -11,7 +11,35 @@ import "contracts/DAOInterface.sol";
  * @title Ereuse Device basic implementation
  */
 
-contract DepositDevice is Ownable{
+contract Offchainsig {
+
+    mapping(address=>uint256) internal nonces;
+
+    function nonceOf(address _owner)
+    public view returns (uint256) {
+        return nonces[_owner];
+    }
+
+    function _verify(
+        address _from, bytes memory _message,
+        bytes32 _r, bytes32 _s, uint8 _v
+    ) internal  returns(address){
+        bytes memory prefix = bytes(abi.encodePacked("\x19Ethereum Signed Message:\n", _message.length));
+        bytes32 hash_msg = keccak256(abi.encodePacked(prefix, _message));
+        // bytes32 hash = keccak256(abi.encodePacked(
+        //     byte(0x19),byte(0),
+        //     this,nonces[_from],
+        //     _message
+        // ));
+
+        address from = ecrecover(hash_msg,_v,_r,_s);
+        return from;
+        // require(from==_from,"sender-address-does-not-match");
+        nonces[_from]++;
+    }
+}
+
+contract DepositDevice is Ownable, Offchainsig {
     // parameters ----------------------------------------------------------------
     RoleManager roleManager;
     MyERC721 erc721;
@@ -53,11 +81,17 @@ contract DepositDevice is Ownable{
         return data.owner;
     }
 
+    function prueba(address _to, bytes32 _r, bytes32 _s, uint8 _v) external onlyOwner returns(address) {
+        _verify(msg.sender,abi.encodePacked(_to),_r,_s,_v);
+    }
 
-    function mint(address _to) 
-    public
+    function mint(
+        address _to,
+        bytes32 _r, bytes32 _s, uint8 _v)
+    external
     onlyOwner
     {
+        _verify(msg.sender,abi.encodePacked(_to),_r,_s,_v);
         require(roleManager.isConsumer(_to), "The destination is not a consumer");
         erc20.transferFrom(msg.sender, address(this), data.value);
         erc721.mint(_to, uint256(address(this)));
@@ -65,10 +99,13 @@ contract DepositDevice is Ownable{
         transferOwnership(msg.sender);
     }
 
-    function toRepair(address _to, uint benefit)
-    public
+    function toRepair(
+        address _to, uint benefit,
+        bytes32 _r, bytes32 _s, uint8 _v)
+    external
     onlyItad
     {
+        _verify(msg.sender,abi.encodePacked(_to, benefit),_r,_s,_v);
         require(roleManager.isRepairer(_to), "The destination is not a repairer");
         _transfer(msg.sender, _to, benefit);
     }
