@@ -3,6 +3,7 @@ import { withRouter } from 'react-router-dom';
 import web3, { selectContractInstance } from '../web3';
 import DeviceFactory from "../truffle/build/contracts/DeviceFactory";
 import DepositDevice from "../truffle/build/contracts/DepositDevice";
+import RoleManager from "../truffle/build/contracts/RoleManager";
 
 // import { declareVariable } from '@babel/types';
 
@@ -16,7 +17,10 @@ class UserClass extends Component {
             dev: [],
             deviceName: '',
             initialPrice: 0,
-            destination: '0x0'
+            destination: '0x0',
+            isNotary: false,
+            isRepairer: false,
+            isConsumer: false,
         };
 
         this.insertDevice = this.insertDevice.bind(this);
@@ -33,8 +37,17 @@ class UserClass extends Component {
 
     async componentDidMount() {
         this.factory = await selectContractInstance(DeviceFactory);
+        this.roleManager  = await selectContractInstance(RoleManager)
+        const isNotary = await this.roleManager.isNotary(this.props.location.state.account)
+        const isConsumer = await this.roleManager.isConsumer(this.props.location.state.account)
+        const isRepairer = await this.roleManager.isRepairer(this.props.location.state.account)
         console.log(this.factory.address)
-        this.setState({ account: this.props.location.state.account });
+        this.setState({ 
+            account: this.props.location.state.account,
+            isNotary,
+            isConsumer,
+            isRepairer
+        });
         await this.checkDevices();
     }
 
@@ -133,22 +146,9 @@ class UserClass extends Component {
             });
     }
 
-    render() {
+    renderListDevices () {
         return (
-            <div className="User_class">
-                <header>
-                    <button onClick={() => this.props.history.push({
-                        pathname: "/",
-                        state: {
-                            account: this.state.account
-                        }
-                    })}>
-                        Home
-                    </button>
-                </header>
-                <br />
-                <div className="device-list">
-                    {(this.state.dev.length !== 0) ?
+            (this.state.dev.length !== 0) ?
                         <div >
                             <div className="transfer">
                                 <form >
@@ -197,48 +197,72 @@ class UserClass extends Component {
                             </ul>
                         </div> :
                         <label>You don't have any device registered yet </label>
+        ) 
+    }
+
+    renderAddDevice() {
+        return <form>
+            <label>
+                Device name:
+                    <br />
+                <input
+                    name="deviceName"
+                    type="text"
+                    value={this.state.deviceName}
+                    onChange={this.handleName}
+                />
+            </label>
+            <br />
+            <label>
+                Initial price (in Wei):
+                    <br />
+                <input
+                    name="price"
+                    type="number"
+                    value={this.state.initialPrice}
+                    onChange={this.handlePrice}
+                />
+            </label>
+            <br />
+            <label>
+                Destination address:
+                    <br />
+                <input
+                    name="destination"
+                    type="text"
+                    value={this.state.destination}
+                    onChange={this.handleDestination}
+                />
+            </label>
+            <br />
+            <button onClick={this.handleSubmit}>
+                Insert device
+                </button>
+        </form>
+    }
+
+    render() {
+        return (
+            <div className="User_class">
+                <header>
+                    <button onClick={() => this.props.history.push({
+                        pathname: "/",
+                        state: {
+                            account: this.state.account
+                        }
+                    })}>
+                        Home
+                    </button>
+                </header>
+                <br />
+                <div className="device-list">
+                    {
+                        this.renderListDevices()
                     }
                 </div>
                 <div> </div> :
                     <div className="device-form">
-                    <form>
-                        <label>
-                            Device name:
-                                <br />
-                            <input
-                                name="deviceName"
-                                type="text"
-                                value={this.state.deviceName}
-                                onChange={this.handleName}
-                            />
-                        </label>
-                        <br />
-                        <label>
-                            Initial price (in Wei):
-                                <br />
-                            <input
-                                name="price"
-                                type="number"
-                                value={this.state.initialPrice}
-                                onChange={this.handlePrice}
-                            />
-                        </label>
-                        <br />
-                        <label>
-                            Destination address:
-                                <br />
-                            <input
-                                name="destination"
-                                type="text"
-                                value={this.state.destination}
-                                onChange={this.handleDestination}
-                            />
-                        </label>
-                        <br />
-                        <button onClick={this.handleSubmit}>
-                            Insert device
-                            </button>
-                    </form>
+                    {this.renderAddDevice()}
                 </div>
             </div>
         );
