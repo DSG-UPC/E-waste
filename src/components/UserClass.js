@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
-import { selectContractInstance } from '../web3';
+import web3, { selectContractInstance } from '../web3';
 import DeviceFactory from "../truffle/build/contracts/DeviceFactory";
 import DepositDevice from "../truffle/build/contracts/DepositDevice";
 
@@ -33,6 +33,7 @@ class UserClass extends Component {
 
     async componentDidMount() {
         this.factory = await selectContractInstance(DeviceFactory);
+        console.log(this.factory.address)
         this.setState({ account: this.props.location.state.account });
         await this.checkDevices();
     }
@@ -64,7 +65,8 @@ class UserClass extends Component {
             await this.factory.createDevice(
                 this.state.deviceName,
                 this.state.initialPrice,
-                this.state.deviceDestination
+                web3.utils.toChecksumAddress(this.state.destination),
+                { from: this.state.account }
             )
                 .then(function (err, ret) {
                     console.log("ret " + ret);
@@ -212,7 +214,7 @@ class UserClass extends Component {
                         </label>
                         <br />
                         <label>
-                            Initial price:
+                            Initial price (in Wei):
                                 <br />
                             <input
                                 name="price"
