@@ -1,3 +1,4 @@
+
 import React, { Component } from 'react';
 import { withRouter } from 'react-router-dom';
 import web3, { selectContractInstance } from '../web3';
@@ -7,7 +8,7 @@ import RoleManager from "../truffle/build/contracts/RoleManager";
 
 // import { declareVariable } from '@babel/types';
 
-class UserClass extends Component {
+class ItadClass extends Component {
 
     constructor(props) {
         super(props);
@@ -37,22 +38,22 @@ class UserClass extends Component {
 
     async componentDidMount() {
         this.factory = await selectContractInstance(DeviceFactory);
-        this.roleManager  = await selectContractInstance(RoleManager)
-        const isNotary = await this.roleManager.isNotary(this.props.location.state.account)
-        const isConsumer = await this.roleManager.isConsumer(this.props.location.state.account)
-        const isRepairer = await this.roleManager.isRepairer(this.props.location.state.account)
-        console.log(this.factory.address)
-        this.setState({ 
-            account: this.props.location.state.account,
-            isNotary,
-            isConsumer,
-            isRepairer
-        });
+        this.roleManager = await selectContractInstance(RoleManager);
+        // let isNotary = await this.roleManager.isNotary(this.state.account);
+        // let isConsumer = await this.roleManager.isConsumer(this.state.account);
+        // let isRepairer = await this.roleManager.isRepairer(this.state.account);
+        // this.setState({
+        //     account: this.props.location.state.account,
+        //     isNotary: isNotary,
+        //     isConsumer: isConsumer,
+        //     isRepairer: isRepairer
+        // });
         await this.checkDevices();
     }
 
     async checkDevices() {
         var devices = await this.factory.getDeployedDevices({ from: this.state.account });
+        console.log(devices);
         let n = devices.length;
         if (this.state.dev.length !== n) {
             devices = [];
@@ -80,15 +81,13 @@ class UserClass extends Component {
                 this.state.initialPrice,
                 web3.utils.toChecksumAddress(this.state.destination),
                 { from: this.state.account }
-            )
-                .then(function (err, ret) {
-                    console.log("ret " + ret);
-                    console.log("err " + err);
-                });
+            ).then(ret => {
+                console.log("ret " + ret.toString());
+            });
         } catch (e) {
-            console.log(e);
+            console.log('Error: ' + e);
         }
-        await this.checkDevices(1);
+        await this.checkDevices();
     }
 
     async transfer(_tokenID, _to) {
@@ -140,64 +139,61 @@ class UserClass extends Component {
     handleSubmit(event) {
         alert('A  new device was submitted: ');
         event.preventDefault();
-        this.insertDevice()
-            .then(ret => {
-                console.log(ret);
-            });
+        this.insertDevice();
     }
 
-    renderListDevices () {
+    renderListDevices() {
         return (
             (this.state.dev.length !== 0) ?
-                        <div >
-                            <div className="transfer">
-                                <form >
-                                    <label>
-                                        Device Uri:
+                <div >
+                    <div className="transfer">
+                        <form >
+                            <label>
+                                Device Uri:
                                         <input
-                                            name="deviceUri"
-                                            type="text"
-                                            value={this.state.deviceUri}
-                                            onChange={this.handleUri}
-                                        />
-                                    </label>
-                                    <br />
-                                    <label>
-                                        To:
+                                    name="deviceUri"
+                                    type="text"
+                                    value={this.state.deviceUri}
+                                    onChange={this.handleUri}
+                                />
+                            </label>
+                            <br />
+                            <label>
+                                To:
                                         <input
-                                            name="buyer"
-                                            type="text"
-                                            placeholder="Address"
-                                            onChange={this.handleBuyer}
-                                        />
-                                    </label>
-                                    <br />
-                                    <button
-                                        onClick={this.handleTransfer}
-                                    >Transfer</button>
-                                </form>
-                            </div>
-                            <ul>
-                                {
-                                    this.state.dev.map((dev) => {
-                                        return (
-                                            <div key={String(dev[2])} className="list-element">
-                                                <label> Device name: {dev.name} </label>
-                                                <br />
-                                                <label> Device initial value: {dev.value} </label>
-                                                <br />
-                                                <label> Device Address: {dev.address} </label>
-                                                <br />
-                                                <label> Device Owner: {dev[4]} </label>
-                                                <br />
-                                                <label> Device Role: {dev[2]} </label>
-                                            </div>
-                                        );
-                                    })}
-                            </ul>
-                        </div> :
-                        <label>You don't have any device registered yet </label>
-        ) 
+                                    name="buyer"
+                                    type="text"
+                                    placeholder="Address"
+                                    onChange={this.handleBuyer}
+                                />
+                            </label>
+                            <br />
+                            <button
+                                onClick={this.handleTransfer}
+                            >Transfer</button>
+                        </form>
+                    </div>
+                    <ul>
+                        {
+                            this.state.dev.map((dev) => {
+                                return (
+                                    <div key={String(dev[2])} className="list-element">
+                                        <label> Device name: {dev.name} </label>
+                                        <br />
+                                        <label> Device initial value: {dev.value} </label>
+                                        <br />
+                                        <label> Device Address: {dev.address} </label>
+                                        <br />
+                                        <label> Device Owner: {dev[4]} </label>
+                                        <br />
+                                        <label> Device Role: {dev[2]} </label>
+                                    </div>
+                                );
+                            })}
+                    </ul>
+                </div> :
+                <label>You don't have any device registered yet </label>
+        )
     }
 
     renderAddDevice() {
@@ -262,11 +258,13 @@ class UserClass extends Component {
                 </div>
                 <div> </div> :
                     <div className="device-form">
-                    {this.renderAddDevice()}
+                    {
+                        this.renderAddDevice()
+                    }
                 </div>
             </div>
         );
     }
 }
 
-export default withRouter(UserClass);
+export default withRouter(ItadClass);

@@ -11,7 +11,11 @@ class Home extends Component {
         this.state = {
             account: '0x0',
             loading: true,
-            userAddress: '0x0'
+            isNotary: false,
+            isRepairer: false,
+            isConsumer: false,
+            isProcessor: false,
+            isItad: false
         };
         this.redirectTo = this.redirectTo.bind(this);
     }
@@ -22,37 +26,89 @@ class Home extends Component {
     }
 
     async createRoles(accs, manager) {
-        var owner = accs.owner;
-        await manager.addConsumer(accs.consumer, { from: owner });
-        await manager.addProducer(accs.producer, { from: owner });
-        await manager.addProcessor(accs.processor, { from: owner });
-        await manager.addRepairer(accs.repairer, { from: owner });
-        await manager.addItad(accs.itad, { from: owner });
-        await manager.addNotary(accs.notary, { from: owner });
+        await manager.addConsumer(accs.consumer, { from: this.state.account });
+        await manager.addProducer(accs.producer, { from: this.state.account });
+        await manager.addProcessor(accs.processor, { from: this.state.account });
+        await manager.addRepairer(accs.repairer, { from: this.state.account });
+        await manager.addItad(accs.itad, { from: this.state.account });
+        await manager.addNotary(accs.notary, { from: this.state.account });
+        console.log('llegue');
+    }
+
+    async updateRoleAssociated(manager) {
+        let isNotary = await manager.isNotary(this.state.account);
+        let isConsumer = await manager.isConsumer(this.state.account);
+        let isRepairer = await manager.isRepairer(this.state.account);
+        let isProcessor = await manager.isProcessor(this.state.account);
+        let isItad = await manager.isItad(this.state.account);
+        this.setState({
+            account: this.state.account,
+            isNotary: isNotary,
+            isConsumer: isConsumer,
+            isRepairer: isRepairer,
+            isProcessor: isProcessor,
+            isItad: isItad
+        });
     }
 
     async redirectTo() {
         let accs = await accounts.then(i => {
             return {
-                'owner': i[0],
-                'consumer': i[1],
-                'producer': i[2],
-                'processor': i[3],
-                'repairer': i[4],
-                'itad': i[5],
-                'notary': i[6],
+                'consumer': i[0],
+                'producer': i[1],
+                'processor': i[2],
+                'repairer': i[3],
+                'itad': i[4],
+                'notary': i[5],
             };
         });
         var manager = await selectContractInstance(RoleManager);
-        this.createRoles(accs, manager);
-        this.props.history.push({
-            pathname: "/userPage",
-            state: {
-                account: this.state.account,
-                accounts: accs
-            }
-        });
-        // }
+        let added = await manager.isConsumer(accs['consumer']);
+        console.log('aqui llego');
+        if (!added)
+            await this.createRoles(accs, manager);
+        await this.updateRoleAssociated(manager);
+        console.log(this.state);
+        if (this.state.isConsumer)
+            this.props.history.push({
+                pathname: "/consumer",
+                state: {
+                    account: this.state.account,
+                    accounts: accs
+                }
+            });
+        else if (this.state.isItad)
+            this.props.history.push({
+                pathname: "/itad",
+                state: {
+                    account: this.state.account,
+                    accounts: accs
+                }
+            });
+        else if (this.state.isProcessor)
+            this.props.history.push({
+                pathname: "/processor",
+                state: {
+                    account: this.state.account,
+                    accounts: accs
+                }
+            });
+        else if (this.state.isNotary)
+            this.props.history.push({
+                pathname: "/notary",
+                state: {
+                    account: this.state.account,
+                    accounts: accs
+                }
+            });
+        else if (this.state.isRepairer)
+            this.props.history.push({
+                pathname: "/repairer",
+                state: {
+                    account: this.state.account,
+                    accounts: accs
+                }
+            });
     }
 
     render() {
