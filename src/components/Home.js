@@ -32,7 +32,6 @@ class Home extends Component {
         await manager.addRepairer(accs.repairer, { from: this.state.account });
         await manager.addItad(accs.itad, { from: this.state.account });
         await manager.addNotary(accs.notary, { from: this.state.account });
-        console.log('llegue');
     }
 
     async updateRoleAssociated(manager) {
@@ -64,11 +63,9 @@ class Home extends Component {
         });
         var manager = await selectContractInstance(RoleManager);
         let added = await manager.isConsumer(accs['consumer']);
-        console.log('aqui llego');
         if (!added)
             await this.createRoles(accs, manager);
         await this.updateRoleAssociated(manager);
-        console.log(this.state);
         if (this.state.isConsumer)
             this.props.history.push({
                 pathname: "/consumer",
