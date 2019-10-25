@@ -53,8 +53,15 @@ contract DepositDevice is Ownable{
         return data.owner;
     }
 
+    function getName() public view returns(string) {
+        return data.name;
+    }
 
-    function mint(address _to) 
+    function getValue() public view returns(uint256) {
+        return data.value;
+    }
+
+    function mint(address _to)
     public
     onlyOwner
     {

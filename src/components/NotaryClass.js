@@ -4,9 +4,6 @@ import { withRouter } from 'react-router-dom';
 import web3, { selectContractInstance } from '../web3';
 import DeviceFactory from "../truffle/build/contracts/DeviceFactory";
 import DepositDevice from "../truffle/build/contracts/DepositDevice";
-import RoleManager from "../truffle/build/contracts/RoleManager";
-
-// import { declareVariable } from '@babel/types';
 
 class NotaryClass extends Component {
 
@@ -35,34 +32,20 @@ class NotaryClass extends Component {
 
     async componentDidMount() {
         this.factory = await selectContractInstance(DeviceFactory);
-        this.roleManager = await selectContractInstance(RoleManager);
-        // let isNotary = await this.roleManager.isNotary(this.state.account);
-        // let isConsumer = await this.roleManager.isConsumer(this.state.account);
-        // let isRepairer = await this.roleManager.isRepairer(this.state.account);
-        // this.setState({
-        //     account: this.props.location.state.account,
-        //     isNotary: isNotary,
-        //     isConsumer: isConsumer,
-        //     isRepairer: isRepairer
-        // });
         await this.checkDevices();
     }
 
-    async checkDevices() {
-        var devices = await this.factory.getDeployedDevices({ from: this.state.account });
-        console.log(devices);
-        let n = devices.length;
+    async checkDevices(owner) {
+        var deployed_devices = await this.factory.getDeployedDevices({ from: owner });
+        console.log(deployed_devices);
+        console.log(this.state.accounts);
+        let n = deployed_devices.length;
         if (this.state.dev.length !== n) {
-            devices = [];
+            let devices = [];
             for (let i = 0; i < n; i++) {
-                let d = await DepositDevice(devices[i]);
-                var task = {
-                    'name': d[i].name,
-                    'owner': d[i].owner,
-                    'address': d[i].address,
-                    'value': d[i].value,
-                    'role': ''
-                };
+                let d = await new web3.eth.Contract(DepositDevice.abi, deployed_devices[i]);
+                console.log(d.methods);
+                var task = await this.getContractData(d);
                 devices.push(task);
             }
             this.setState({
@@ -71,20 +54,28 @@ class NotaryClass extends Component {
         }
     }
 
+    async getContractData(contract) {
+        let name = await contract.methods.getName().call().then(res => { return res; });
+        let owner = await contract.methods.getOwner().call().then(res => { return res; });
+        let value = await contract.methods.getValue().call().then(res => { return res; });
+        let addr = await contract._address;
+
+        return {
+            'name': name,
+            'owner': owner,
+            'price': value,
+            'address': addr
+        };
+    }
+
     async insertDevice() {
-        try {
-            await this.factory.createDevice(
-                this.state.deviceName,
-                this.state.initialPrice,
-                web3.utils.toChecksumAddress(this.state.destination),
-                { from: this.state.account }
-            ).then(ret => {
-                console.log("ret " + ret.toString());
-            });
-        } catch (e) {
-            console.log('Error: ' + e);
-        }
-        await this.checkDevices();
+        await this.factory.createDevice(
+            this.state.deviceName,
+            this.state.initialPrice,
+            web3.utils.toChecksumAddress(this.state.destination),
+            { from: this.state.account }
+        );
+        await this.checkDevices(this.state.destination);
     }
 
     async transfer(_tokenID, _to) {
