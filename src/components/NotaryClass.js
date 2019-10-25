@@ -15,7 +15,8 @@ class NotaryClass extends Component {
             dev: [],
             deviceName: '',
             initialPrice: 0,
-            destination: '0x0'
+            destination: '0x0',
+            consumer: props.location.state.accounts.consumer
         };
 
         this.insertDevice = this.insertDevice.bind(this);
@@ -32,22 +33,20 @@ class NotaryClass extends Component {
 
     async componentDidMount() {
         this.factory = await selectContractInstance(DeviceFactory);
-        await this.checkDevices();
+        await this.checkDevices(this.state.consumer);
     }
 
     async checkDevices(owner) {
         var deployed_devices = await this.factory.getDeployedDevices({ from: owner });
-        console.log(deployed_devices);
-        console.log(this.state.accounts);
         let n = deployed_devices.length;
         if (this.state.dev.length !== n) {
             let devices = [];
             for (let i = 0; i < n; i++) {
                 let d = await new web3.eth.Contract(DepositDevice.abi, deployed_devices[i]);
-                console.log(d.methods);
                 var task = await this.getContractData(d);
                 devices.push(task);
             }
+            console.log(devices);
             this.setState({
                 dev: [devices]
             });
@@ -161,24 +160,21 @@ class NotaryClass extends Component {
                             >Transfer</button>
                         </form>
                     </div>
-                    <ul>
-                        {
-                            this.state.dev.map((dev) => {
-                                return (
-                                    <div key={String(dev[2])} className="list-element">
-                                        <label> Device name: {dev.name} </label>
-                                        <br />
-                                        <label> Device initial value: {dev.value} </label>
-                                        <br />
-                                        <label> Device Address: {dev.address} </label>
-                                        <br />
-                                        <label> Device Owner: {dev[4]} </label>
-                                        <br />
-                                        <label> Device Role: {dev[2]} </label>
-                                    </div>
-                                );
-                            })}
-                    </ul>
+                    {
+                        this.state.dev.map((d) => {
+                            return (
+                                <div key={String(d.address)} className="list-element">
+                                    <label> Device name: {d.name} </label>
+                                    <br />
+                                    <label> Device initial value: {d.price} </label>
+                                    <br />
+                                    <label> Device Address: {d.address} </label>
+                                    <br />
+                                    <label> Device Owner: {d.owner} </label>
+                                </div>
+                            );
+                        })
+                    }
                 </div> :
                 <label>You don't have any device registered yet </label>
         )

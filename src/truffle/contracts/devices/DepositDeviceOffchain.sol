@@ -39,7 +39,7 @@ contract Offchainsig {
     }
 }
 
-contract DepositDevice is Ownable, Offchainsig {
+contract DepositDeviceOffchain is Ownable, Offchainsig {
     // parameters ----------------------------------------------------------------
     RoleManager roleManager;
     MyERC721 erc721;
@@ -79,6 +79,14 @@ contract DepositDevice is Ownable, Offchainsig {
 
     function getOwner() public view returns(address) {
         return data.owner;
+    }
+
+    function getName() public view returns(string) {
+        return data.name;
+    }
+
+    function getValue() public view returns(uint256) {
+        return data.value;
     }
 
     function prueba(address _to, bytes32 _r, bytes32 _s, uint8 _v) external onlyOwner returns(address) {
