@@ -21,12 +21,13 @@ class Home extends Component {
 
     async componentWillMount() {
         this.roleManager = await selectContractInstance(RoleManager);
+        console.log(this.roleManager)
         this.setState({ loading: false });
         this.setState({ account: window.ethereum.selectedAddress });
     }
 
     async updateCurrentRole() {
-        let is_notary = await this.roleManager.isNotary(this.state.account);
+        let is_notary = await this.roleManager.isNotary(this.state.account, {from: this.state.account});
         let is_consumer = await this.roleManager.isConsumer(this.state.account);
         let is_repairer = await this.roleManager.isRepairer(this.state.account);
         this.setState({
@@ -83,15 +84,11 @@ class Home extends Component {
         }
         return (
             <div id="home">
-                <p>
-                    We love our planet and we want to do whatever it is possible to save it.
-                    Every year different tons of E-waste are generated worldwide. Only a small percentage is reused or
-                    recycled.
-                    We want to reduce this waste and we have crate this championship to raise awareness in people.
-                </p>
-                <h2> Would you enter in the E-Waste championship? </h2>
+                <h1>Usody Software</h1>
+                <h2>For a Circular Economy of Electronics</h2>
+            
                 <button onClick={this.redirectTo}>
-                    Let's save the planet!
+                Access Device Life cycle Management
                 </button>
             </div>
         );
