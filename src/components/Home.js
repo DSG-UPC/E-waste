@@ -21,7 +21,7 @@ class Home extends Component {
 
     async componentWillMount() {
         this.roleManager = await selectContractInstance(RoleManager);
-        console.log(this.roleManager)
+        console.log(this.roleManager);
         this.setState({ loading: false });
         this.setState({ account: window.ethereum.selectedAddress });
     }

@@ -107,7 +107,12 @@ header > button{
 
 .list-element{
     position: relative;
+    list-style-position:inside;
+    list-style-type: none;
     margin: 3%;
+    border: 2px solid;
+    border-radius: 5px;
+    padding-left: 10px
 }
 
 .list-element > button{

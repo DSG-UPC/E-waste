@@ -4,7 +4,6 @@ import { withRouter } from 'react-router-dom';
 import web3, { selectContractInstance } from '../web3';
 import DeviceFactory from "../truffle/build/contracts/DeviceFactory";
 import DepositDevice from "../truffle/build/contracts/DepositDevice";
-import RoleManager from "../truffle/build/contracts/RoleManager";
 
 // import { declareVariable } from '@babel/types';
 
@@ -19,74 +18,62 @@ class ConsumerClass extends Component {
             deviceName: '',
             initialPrice: 0,
             destination: '0x0',
-            isNotary: false,
-            isRepairer: false,
-            isConsumer: false,
+            deviceAddress: '0x0'
         };
 
-        this.insertDevice = this.insertDevice.bind(this);
         this.checkDevices = this.checkDevices.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
         this.handleName = this.handleName.bind(this);
         this.handlePrice = this.handlePrice.bind(this);
         this.handleDestination = this.handleDestination.bind(this);
+        this.handleDeviceAddress = this.handleDeviceAddress.bind(this);
         this.handleTransfer = this.handleTransfer.bind(this);
+        this.isInvalid = this.isInvalid.bind(this);
         this.transfer = this.transfer.bind(this);
-        this.handleBuyer = this.handleBuyer.bind(this);
-        this.handleUri = this.handleUri.bind(this);
     }
 
     async componentDidMount() {
         this.factory = await selectContractInstance(DeviceFactory);
-        this.roleManager = await selectContractInstance(RoleManager);
         await this.checkDevices();
     }
 
     async checkDevices() {
-        var devices = await this.factory.getDeployedDevices({ from: this.state.account });
-        console.log(devices);
-        let n = devices.length;
+        var deployed_devices = await this.factory.getDeployedDevices({ from: this.state.account });
+        var n = deployed_devices.length;
         if (this.state.dev.length !== n) {
-            devices = [];
+            var devices = [];
             for (let i = 0; i < n; i++) {
-                let d = await DepositDevice(devices[i]);
-                var task = {
-                    'name': d[i].name,
-                    'owner': d[i].owner,
-                    'address': d[i].address,
-                    'value': d[i].value,
-                    'role': ''
-                };
+                let d = await new web3.eth.Contract(DepositDevice.abi, deployed_devices[i]);
+                var task = await this.getContractData(d);
                 devices.push(task);
             }
             this.setState({
-                dev: [devices]
+                dev: devices
             });
         }
     }
 
-    async insertDevice() {
-        try {
-            await this.factory.createDevice(
-                this.state.deviceName,
-                this.state.initialPrice,
-                web3.utils.toChecksumAddress(this.state.destination),
-                { from: this.state.account }
-            ).then(ret => {
-                console.log("ret " + ret.toString());
-            });
-        } catch (e) {
-            console.log('Error: ' + e);
-        }
-        await this.checkDevices();
+    async getContractData(contract) {
+        let name = await contract.methods.getName().call().then(res => { return res; });
+        let owner = await contract.methods.getOwner().call().then(res => { return res; });
+        let value = await contract.methods.getValue().call().then(res => { return res; });
+        let addr = await contract._address;
+
+        return {
+            'name': name,
+            'owner': owner,
+            'price': value,
+            'address': addr
+        };
     }
 
-    async transfer(_tokenID, _to) {
-        await this.traceability.transferFrom(this.state.account, _to, _tokenID, { from: this.state.account })
-            .then(function (err, ret) {
-                console.log("ret " + ret);
-                console.log("err " + err);
+    async transfer(d, _to) {
+        var device = await new web3.eth.Contract(DepositDevice.abi, d.address);
+        // await device.methods.transferDevice(this.state.account, { from: d.owner })
+        await device.methods.transferDevice(web3.utils.toChecksumAddress(_to)).call({ from: d.owner })
+            .then((result) => {
+                console.log("Owner address: " + result);
             });
+        this.checkDevices();
     }
 
     handleName(event) {
@@ -101,36 +88,28 @@ class ConsumerClass extends Component {
         this.setState({ destination: event.target.value });
     }
 
-    handleBuyer(event) {
-        this.setState({ buyer: event.target.value });
+    handleDeviceAddress(event) {
+        this.setState({ deviceAddress: event.target.value });
     }
 
-    handleUri(event) {
-        this.setState({ deviceUri: event.target.value });
+    isInvalid() {
+        return this.state.deviceAddress === '0x0' ||
+            this.state.destination === '0x0' ||
+            this.state.accounts.repairer !== this.state.destination;
     }
 
     handleTransfer(event) {
         alert('A device is going to be transferred ');
         event.preventDefault();
-        if (this.state.deviceUri === '' || this.state.buyer === '0x0') {
-            alert('Device Uri and To must be not empty');
+        if (this.isInvalid()) {
+            alert('The device cannot be sent to that address');
             return null;
         } else {
-            for (let i = 0; i < this.state.noDev; i++) {
-                if (this.state.dev[i][2] === this.state.deviceUri) {
-                    this.transfer(this.state.dev[i][3], this.state.buyer).then(res => {
-                        console.log(res);
-                    });
-                }
-            }
+            let d = this.state.dev.find(a => { return a.address === this.state.deviceAddress; });
+            this.transfer(d, this.state.destination).then(res => {
+                console.log(res);
+            });
         }
-    }
-
-
-    handleSubmit(event) {
-        alert('A  new device was submitted: ');
-        event.preventDefault();
-        this.insertDevice();
     }
 
     renderListDevices() {
@@ -140,22 +119,22 @@ class ConsumerClass extends Component {
                     <div className="transfer">
                         <form >
                             <label>
-                                Device Uri:
+                                Device Address:
                                         <input
-                                    name="deviceUri"
+                                    name="deviceAddress"
                                     type="text"
-                                    value={this.state.deviceUri}
-                                    onChange={this.handleUri}
+                                    value={this.state.deviceAddress}
+                                    onChange={this.handleDeviceAddress}
                                 />
                             </label>
                             <br />
                             <label>
                                 To:
                                         <input
-                                    name="buyer"
+                                    name="destination"
                                     type="text"
                                     placeholder="Address"
-                                    onChange={this.handleBuyer}
+                                    onChange={this.handleDestination}
                                 />
                             </label>
                             <br />
@@ -166,66 +145,22 @@ class ConsumerClass extends Component {
                     </div>
                     <ul>
                         {
-                            this.state.dev.map((dev) => {
+                            this.state.dev.map((d) => {
                                 return (
-                                    <div key={String(dev[2])} className="list-element">
-                                        <label> Device name: {dev.name} </label>
+                                    <li key={String(d.address)} className="list-element">
+                                        <label> Device name: {d.name} </label>
                                         <br />
-                                        <label> Device initial value: {dev.value} </label>
+                                        <label> Device initial value: {d.price} </label>
                                         <br />
-                                        <label> Device Address: {dev.address} </label>
+                                        <label> Device Address: {String(d.address)} </label>
                                         <br />
-                                        <label> Device Owner: {dev[4]} </label>
-                                        <br />
-                                        <label> Device Role: {dev[2]} </label>
-                                    </div>
+                                    </li>
                                 );
                             })}
                     </ul>
                 </div> :
                 <label>You don't have any device registered yet </label>
         )
-    }
-
-    renderAddDevice() {
-        return <form>
-            <label>
-                Device name:
-                    <br />
-                <input
-                    name="deviceName"
-                    type="text"
-                    value={this.state.deviceName}
-                    onChange={this.handleName}
-                />
-            </label>
-            <br />
-            <label>
-                Initial price (in Wei):
-                    <br />
-                <input
-                    name="price"
-                    type="number"
-                    value={this.state.initialPrice}
-                    onChange={this.handlePrice}
-                />
-            </label>
-            <br />
-            <label>
-                Destination address:
-                    <br />
-                <input
-                    name="destination"
-                    type="text"
-                    value={this.state.destination}
-                    onChange={this.handleDestination}
-                />
-            </label>
-            <br />
-            <button onClick={this.handleSubmit}>
-                Insert device
-                </button>
-        </form>
     }
 
     render() {
@@ -245,12 +180,6 @@ class ConsumerClass extends Component {
                 <div className="device-list">
                     {
                         this.renderListDevices()
-                    }
-                </div>
-                <div> </div> :
-                    <div className="device-form">
-                    {
-                        this.renderAddDevice()
                     }
                 </div>
             </div>

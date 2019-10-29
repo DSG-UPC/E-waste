@@ -49,6 +49,12 @@ contract DepositDevice is Ownable{
         transferOwnership(_sender);
     }
 
+    function transferDevice(address _to) public onlyOwner returns(address){
+        data.owner = _to;
+        transferOwnership(_to);
+        return data.owner;
+    }
+
     function getOwner() public view returns(address) {
         return data.owner;
     }
