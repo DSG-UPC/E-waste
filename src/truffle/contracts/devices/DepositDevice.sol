@@ -52,7 +52,7 @@ contract DepositDevice is Ownable{
     function transferDevice(address _owner, address _to) public{
         require(data.owner == _owner, 'Only the owner can transfer the device');
         data.owner = _to;
-        transferOwnership(_to);
+        // transferOwnership(_to);
     }
 
     function getOwner() public view returns(address) {

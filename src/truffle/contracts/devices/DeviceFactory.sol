@@ -27,10 +27,10 @@ contract DeviceFactory {
   }
 
   function transferDevice(address device, address _to) public{
-    // DepositDevice d = DepositDevice(device);
+    DepositDevice d = DepositDevice(device);
     deleteDevice(msg.sender, device);
     deployed_devices[_to].push(device);
-    // d.transferDevice(msg.sender, _to);
+    d.transferDevice(msg.sender, _to);
   }
 
   function deleteDevice(address owner, address device) internal{
