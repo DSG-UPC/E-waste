@@ -50,6 +50,7 @@ class ConsumerClass extends Component {
                 dev: devices
             });
         }
+        console.log(this.state.dev);
     }
 
     async getContractData(contract) {
@@ -57,7 +58,6 @@ class ConsumerClass extends Component {
         let owner = await contract.methods.getOwner().call().then(res => { return res; });
         let value = await contract.methods.getValue().call().then(res => { return res; });
         let addr = await contract._address;
-
         return {
             'name': name,
             'owner': owner,
@@ -66,13 +66,10 @@ class ConsumerClass extends Component {
         };
     }
 
-    async transfer(d, _to) {
-        var device = await new web3.eth.Contract(DepositDevice.abi, d.address);
-        // await device.methods.transferDevice(this.state.account, { from: d.owner })
-        await device.methods.transferDevice(web3.utils.toChecksumAddress(_to)).call({ from: d.owner })
-            .then((result) => {
-                console.log("Owner address: " + result);
-            });
+    async transfer(device_address, _to) {
+        await this.factory.transferDevice(web3.utils.toChecksumAddress(device_address),
+            web3.utils.toChecksumAddress(_to),
+            { from: this.state.account });
         this.checkDevices();
     }
 
@@ -106,7 +103,7 @@ class ConsumerClass extends Component {
             return null;
         } else {
             let d = this.state.dev.find(a => { return a.address === this.state.deviceAddress; });
-            this.transfer(d, this.state.destination).then(res => {
+            this.transfer(d.address, this.state.destination).then(res => {
                 console.log(res);
             });
         }

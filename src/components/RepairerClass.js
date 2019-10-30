@@ -67,12 +67,9 @@ class RepairerClass extends Component {
     }
 
     async transfer(d, _to) {
-        var device = await new web3.eth.Contract(DepositDevice.abi, d.address);
-        // await device.methods.transferDevice(this.state.account, { from: d.owner })
-        await device.methods.transferDevice(web3.utils.toChecksumAddress(_to)).call({ from: d.owner })
-            .then((result) => {
-                console.log("Owner address: " + result);
-            });
+        await this.factory.transferDevice(web3.utils.toChecksumAddress(d.address),
+            web3.utils.toChecksumAddress(_to),
+            { from: this.state.account });
         this.checkDevices();
     }
 
@@ -95,7 +92,7 @@ class RepairerClass extends Component {
     isInvalid() {
         return this.state.deviceAddress === '0x0' ||
             this.state.destination === '0x0' ||
-            this.state.accounts.repairer !== this.state.destination;
+            this.state.accounts.consumer !== this.state.destination;
     }
 
     handleTransfer(event) {

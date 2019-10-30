@@ -46,7 +46,7 @@ class Home extends Component {
             };
         });
         let curr_state = {
-            account: this.state.account,
+            account: window.ethereum.selectedAddress,
             accounts: accs
         };
         await this.updateCurrentRole();
