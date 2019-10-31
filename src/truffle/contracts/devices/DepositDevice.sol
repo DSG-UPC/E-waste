@@ -1,6 +1,6 @@
 pragma solidity ^0.4.25;
 
-import "../tokens/MyERC721.sol";
+import "contracts/tokens/MyERC721.sol";
 import "contracts/tokens/EIP20Interface.sol";
 import "contracts/helpers/RoleManager.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -35,7 +35,6 @@ contract DepositDevice is Ownable{
     constructor(string _name, address _sender, uint _initialDeposit, address _daoAddress)
     public
     {
-        //daoAddress = _daoAddress;
         DAOContract = DAOInterface(_daoAddress);
         address erc20Address = DAOContract.getERC20();
         address erc721Address = DAOContract.getERC721();
@@ -46,13 +45,13 @@ contract DepositDevice is Ownable{
         data.name = _name;
         data.owner = _sender;
         data.value = _initialDeposit;
-        transferOwnership(_sender);
+        _transferOwnership(_sender);
     }
 
-    function transferDevice(address _owner, address _to) public{
-        require(data.owner == _owner, 'Only the owner can transfer the device');
+    function transferDevice(address from, address _to) public{
+        require(from == data.owner, 'Only owner can transfer device');
         data.owner = _to;
-        // transferOwnership(_to);
+        _transferOwnership(_to);
     }
 
     function getOwner() public view returns(address) {
@@ -75,7 +74,7 @@ contract DepositDevice is Ownable{
         erc20.transferFrom(msg.sender, address(this), data.value);
         erc721.mint(_to, uint256(address(this)));
         data.uid = uint256(address(this));
-        transferOwnership(msg.sender);
+        _transferOwnership(msg.sender);
     }
 
     function toRepair(address _to, uint benefit)
@@ -117,7 +116,7 @@ contract DepositDevice is Ownable{
         require(_to != address(0), "The destination cannot be the 0 address");
         erc721.transferFrom(_from, _to, data.uid);
         erc20.transferFrom(_from, _to, valueSent);
-        transferOwnership(_to);
+        _transferOwnership(_to);
         data.owner = _to;
     }
 

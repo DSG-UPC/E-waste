@@ -1,6 +1,6 @@
 pragma solidity ^0.4.25;
 
-import "./DepositDevice.sol";
+import "contracts/devices/DepositDevice.sol";
 import "contracts/DAOInterface.sol";
 import "contracts/helpers/RoleManager.sol";
 import "openzeppelin-solidity/contracts/ownership/Ownable.sol";
@@ -26,11 +26,11 @@ contract DeviceFactory {
     return newContract;
   }
 
-  function transferDevice(address device, address _to) public{
+  function transfer(address device, address _to) public{
     DepositDevice d = DepositDevice(device);
+    d.transferDevice(msg.sender, _to);
     deleteDevice(msg.sender, device);
     deployed_devices[_to].push(device);
-    d.transferDevice(msg.sender, _to);
   }
 
   function deleteDevice(address owner, address device) internal{
@@ -45,7 +45,7 @@ contract DeviceFactory {
     }
   }
 
-  function getDeployedDevices() public view returns(address[]){
+  function getDeployedDevices() public view returns(address[] devices){
     return deployed_devices[msg.sender];
   }
 

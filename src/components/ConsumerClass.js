@@ -66,8 +66,8 @@ class ConsumerClass extends Component {
         };
     }
 
-    async transfer(device_address, _to) {
-        await this.factory.transferDevice(web3.utils.toChecksumAddress(device_address),
+    async transfer(d, _to) {
+        await this.factory.transfer(web3.utils.toChecksumAddress(d.address),
             web3.utils.toChecksumAddress(_to),
             { from: this.state.account });
         this.checkDevices();
@@ -103,9 +103,7 @@ class ConsumerClass extends Component {
             return null;
         } else {
             let d = this.state.dev.find(a => { return a.address === this.state.deviceAddress; });
-            this.transfer(d.address, this.state.destination).then(res => {
-                console.log(res);
-            });
+            this.transfer(d, this.state.destination);
         }
     }
 
